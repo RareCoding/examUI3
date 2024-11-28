@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Exam Timetable - Arthur Lardieg</title>
+    <!-- Include Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;700&display=swap" rel="stylesheet">
+    <!-- Include Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --background-color: #f5f5f5;
+            --text-color: #333;
+            --primary-color: #4f8a8b;
+            --secondary-color: #c8d5b9;
+            --accent-color: #fbd46d;
+            --font-family: 'Nunito', sans-serif;
+        }
+        [data-theme="dark"] {
+            --background-color: #1e1e1e;
+            --text-color: #ffffff;
+            --primary-color: #2d2d2d;
+            --secondary-color: #3a3f44;
+            --accent-color: #007acc;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: var(--font-family);
+            background-color: var(--background-color);
+            color: var(--text-color);
+        }
+        header {
+            padding: 20px;
+            background-color: var(--primary-color);
+            color: #fff;
+            text-align: center;
+            position: relative;
+        }
+        header h1 {
+            margin: 0;
+        }
+        .container {
+            padding: 20px;
+        }
+        .toggle-switch {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+        /* Toggle Switch Styles */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+        .switch input { 
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: var(--accent-color);
+        }
+        input:focus + .slider {
+            box-shadow: 0 0 1px var(--accent-color);
+        }
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            cursor: pointer;
+        }
+        table thead {
+            background-color: var(--secondary-color);
+        }
+        table th, table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        table tbody tr:hover {
+            background-color: var(--secondary-color);
+        }
+        .chart-container {
+            width: 100%;
+            margin-top: 40px;
+        }
+        .filter-container {
+            margin-top: 20px;
+        }
+        .filter-container select {
+            padding: 8px;
+            font-size: 16px;
+        }
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1001;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background-color: var(--background-color);
+            margin: 10% auto;
+            padding: 20px;
+            border: 1px solid var(--secondary-color);
+            width: 80%;
+            max-width: 600px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .close-button {
+            color: var(--text-color);
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close-button:hover,
+        .close-button:focus {
+            color: var(--accent-color);
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .notes-area {
+            width: 100%;
+            max-width: 100%;
+            height: 200px;
+            margin-top: 10px;
+            padding: 10px;
+            font-size: 16px;
+            font-family: var(--font-family);
+            border: 1px solid var(--secondary-color);
+            border-radius: 5px;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .save-notes-button {
+            margin-top: 10px;
+            padding: 10px 20px;
+            background-color: var(--primary-color);
+            border: none;
+            color: #fff;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .save-notes-button:hover {
+            background-color: var(--accent-color);
+        }
+        /* Login Screen Styles */
+        #loginScreen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            position: fixed;
+            width: 100%;
+            z-index: 1000;
+        }
+        #loginScreen h2 {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        #loginScreen input[type="password"] {
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid var(--secondary-color);
+            border-radius: 5px;
+            width: 250px;
+            margin-bottom: 10px;
+            background-color: var(--background-color);
+            color: var(--text-color);
+        }
+        #loginScreen button {
+            padding: 10px 20px;
+            background-color: var(--primary-color);
+            border: none;
+            color: #fff;
+            cursor: pointer;
+            font-size: 16px;
+            border-radius: 5px;
+        }
+        #loginScreen button:hover {
+            background-color: var(--accent-color);
+        }
+        #loginError {
+            color: red;
+            margin-top: 10px;
+        }
+        /* Loading Screen Styles */
+        #loadingScreen {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            position: fixed;
+            width: 100%;
+            z-index: 1000;
+            flex-direction: column;
+        }
+        #loadingScreen h2 {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        /* Spinner Styles */
+        .spinner {
+            border: 8px solid var(--secondary-color);
+            border-top: 8px solid var(--accent-color);
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        /* Hide main content initially */
+        #mainContent {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="loginScreen">
+        <h2>This content is locked</h2>
+        <p>Please enter your password before continuing.</p>
+        <input type="password" id="passwordInput" placeholder="Enter password">
+        <button onclick="checkPassword()">Login</button>
+        <p id="loginError"></p>
+    </div>
+    <!-- Loading Screen -->
+    <div id="loadingScreen">
+        <div class="spinner"></div>
+        <h2>Authenticating...</h2>
+    </div>
+    <!-- Main Content -->
+    <div id="mainContent">
+        <header>
+            <h1>Exam Timetable</h1>
+            <p>Candidate: Arthur Lardieg | Candidate Number: 2078</p>
+            <div class="toggle-switch">
+                <label class="switch">
+                    <input type="checkbox" onclick="toggleDarkMode()">
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </header>
+        <div class="container">
+            <div class="filter-container">
+                <label for="subject-filter">Filter by Subject:</label>
+                <select id="subject-filter" onchange="filterTable()">
+                    <option value="All">All</option>
+                </select>
+            </div>
+            <table id="timetable">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Start</th>
+                        <th>Duration</th>
+                        <th>Subject</th>
+                        <th>Paper</th>
+                        <th>Room</th>
+                        <th>Seat</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Table data will be inserted here by JavaScript -->
+                </tbody>
+            </table>
+            <div class="chart-container">
+                <canvas id="examChart"></canvas>
+            </div>
+        </div>
+        <!-- Modal -->
+        <div id="subjectModal" class="modal">
+            <div class="modal-content">
+                <span class="close-button" onclick="closeModal()">&times;</span>
+                <h2 id="modalSubject"></h2>
+                <p id="modalPaper"></p>
+                <textarea id="notesArea" class="notes-area" placeholder="Enter your notes here..."></textarea>
+                <button class="save-notes-button" onclick="saveNotes()">Save Notes</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        const data = [
+            { date: 'Wed 04/12/2024', start: '14:00', duration: '2h 49m', subject: 'English Language', paper: 'Mock Exam', room: 'Sports Hall - UCS Exams', seat: 'A14' },
+            { date: 'Tue 07/01/2025', start: '11:00', duration: '1h 34m', subject: 'Biology', paper: 'Mock Paper 2', room: 'Sports Hall - UCS Exams', seat: 'A9' },
+            { date: 'Wed 08/01/2025', start: '09:00', duration: '1h 15m', subject: 'French', paper: 'Mock Paper 1', room: 'Sports Hall - UCS Exams', seat: 'A8' },
+            { date: 'Wed 08/01/2025', start: '14:00', duration: '2h 30m', subject: 'Physics', paper: 'Mock Paper 1', room: 'Sports Hall - UCS Exams', seat: 'A12' },
+            { date: 'Thu 09/01/2025', start: '09:00', duration: '1h 15m', subject: 'Spanish', paper: 'Mock Paper 1', room: 'Sports Hall - UCS Exams', seat: 'A6' },
+            { date: 'Thu 09/01/2025', start: '14:00', duration: '2h 30m', subject: 'Maths', paper: 'Mock Paper 1', room: 'Sports Hall - UCS Exams', seat: 'A14' },
+            { date: 'Fri 10/01/2025', start: '09:00', duration: '2h 30m', subject: 'Chemistry', paper: 'Mock Paper 1', room: 'Sports Hall - UCS Exams', seat: 'I8' },
+            { date: 'Mon 13/01/2025', start: '09:00', duration: '1h 15m', subject: 'Spanish', paper: 'Mock Paper 2', room: 'Sports Hall - UCS Exams', seat: 'A9' },
+            { date: 'Mon 13/01/2025', start: '11:00', duration: '1h 34m', subject: 'Physics', paper: 'Mock Paper 2', room: 'Sports Hall - UCS Exams', seat: 'A12' },
+            { date: 'Mon 13/01/2025', start: '14:00', duration: '2h 30m', subject: 'Computer Science', paper: 'Mock Exam 1', room: 'Sports Hall - UCS Exams', seat: 'A16' },
+            { date: 'Tue 14/01/2025', start: '11:00', duration: '2h 12m', subject: 'Additional Maths', paper: 'Mock', room: 'Sports Hall - UCS Exams', seat: 'A15' },
+            { date: 'Tue 14/01/2025', start: '14:00', duration: '2h 30m', subject: 'English Literature', paper: 'Mock Exam', room: 'Sports Hall - UCS Exams', seat: 'A14' },
+            { date: 'Wed 15/01/2025', start: '09:00', duration: '1h 15m', subject: 'French', paper: 'Mock Paper 2', room: 'Sports Hall - UCS Exams', seat: 'A8' },
+            { date: 'Wed 15/01/2025', start: '11:00', duration: '2h 30m', subject: 'D&T', paper: 'Mock', room: 'Sports Hall - UCS Exams', seat: 'A12' },
+            { date: 'Thu 16/01/2025', start: '11:00', duration: '2h 12m', subject: 'Computer Science', paper: 'Mock Exam 2', room: 'Sports Hall - UCS Exams', seat: 'A10' },
+            { date: 'Thu 16/01/2025', start: '14:00', duration: '2h 30m', subject: 'Maths', paper: 'Mock Paper 2', room: 'Sports Hall - UCS Exams', seat: 'A14' },
+            { date: 'Fri 17/01/2025', start: '11:15', duration: '1h 34m', subject: 'Chemistry', paper: 'Mock Paper 2', room: 'Sports Hall - UCS Exams', seat: 'A14' },
+            { date: 'Fri 17/01/2025', start: '14:00', duration: '2h 30m', subject: 'Biology', paper: 'Mock Paper 1', room: 'Sports Hall - UCS Exams', seat: 'A9' },
+        ];
+    
+        let currentSubject = '';
+        let notes = {};
+    
+        function renderTable(filterSubject = 'All') {
+            const tbody = document.querySelector('#timetable tbody');
+            tbody.innerHTML = '';
+            let filteredData = data;
+            if (filterSubject !== 'All') {
+                filteredData = data.filter(item => item.subject === filterSubject);
+            }
+            filteredData.forEach(item => {
+                const row = document.createElement('tr');
+                for (const key of ['date', 'start', 'duration', 'subject', 'paper', 'room', 'seat']) {
+                    const cell = document.createElement('td');
+                    cell.textContent = item[key];
+                    row.appendChild(cell);
+                }
+                row.addEventListener('click', () => {
+                    openModal(item);
+                });
+                tbody.appendChild(row);
+            });
+        }
+    
+        function populateSubjectFilter() {
+            const subjectSet = new Set(data.map(item => item.subject));
+            const subjectFilter = document.getElementById('subject-filter');
+            subjectSet.forEach(subject => {
+                const option = document.createElement('option');
+                option.value = subject;
+                option.textContent = subject;
+                subjectFilter.appendChild(option);
+            });
+        }
+    
+        function filterTable() {
+            const subjectFilter = document.getElementById('subject-filter');
+            renderTable(subjectFilter.value);
+        }
+    
+        function parseDuration(durationStr) {
+            const matches = durationStr.match(/(\d+)h\s*(\d+)m/);
+            if (matches) {
+                return parseInt(matches[1]) * 60 + parseInt(matches[2]);
+            } else {
+                return 0;
+            }
+        }
+    
+        function renderChart() {
+            const ctx = document.getElementById('examChart').getContext('2d');
+            const subjects = data.map(item => item.subject + ' - ' + item.paper);
+            const durations = data.map(item => parseDuration(item.duration));
+    
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: subjects,
+                    datasets: [{
+                        label: 'Exam Duration (minutes)',
+                        data: durations,
+                        backgroundColor: 'rgba(79, 138, 139, 0.6)',
+                        borderColor: 'rgba(79, 138, 139, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Subject and Paper'
+                            },
+                            ticks: {
+                                maxRotation: 90,
+                                minRotation: 45
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Duration (minutes)'
+                            },
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+    
+        function toggleDarkMode() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            if (currentTheme === 'dark') {
+                document.documentElement.removeAttribute('data-theme');
+            } else {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        }
+    
+        function openModal(item) {
+            currentSubject = item.subject;
+            document.getElementById('modalSubject').textContent = item.subject;
+            document.getElementById('modalPaper').textContent = item.paper;
+    
+            // Load saved notes if any
+            if (notes[currentSubject]) {
+                document.getElementById('notesArea').value = notes[currentSubject];
+            } else {
+                document.getElementById('notesArea').value = '';
+            }
+    
+            document.getElementById('subjectModal').style.display = 'block';
+        }
+    
+        function closeModal() {
+            document.getElementById('subjectModal').style.display = 'none';
+        }
+    
+        function saveNotes() {
+            const notesText = document.getElementById('notesArea').value;
+            notes[currentSubject] = notesText;
+            alert('Notes saved for ' + currentSubject);
+            closeModal();
+        }
+    
+        window.onclick = function(event) {
+            const modal = document.getElementById('subjectModal');
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+    
+        // Password Authentication
+        function checkPassword() {
+            const passwordInput = document.getElementById('passwordInput');
+            const loginError = document.getElementById('loginError');
+            if (passwordInput.value === 'admin') {
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('loadingScreen').style.display = 'flex';
+                setTimeout(() => {
+                    document.getElementById('loadingScreen').style.display = 'none';
+                    document.getElementById('mainContent').style.display = 'block';
+                    initializeApp();
+                }, 2000);
+            } else {
+                loginError.textContent = 'Incorrect password. Please try again.';
+            }
+        }
+    
+        function initializeApp() {
+            populateSubjectFilter();
+            renderTable();
+            renderChart();
+        }
+    </script>
+</body>
+</html>
